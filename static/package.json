@@ -1,0 +1,29 @@
+{
+  "name": "pc_remote_viewer",
+  "version": "0.0.1",
+  "description": "point cloud viewer on remote server",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "crayon",
+  "license": "ISC",
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.4",
+    "css-loader": "^6.5.1",
+    "webpack": "^5.64.4",
+    "webpack-cli": "^4.9.1"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.0",
+    "bootstrap": "^5.1.3",
+    "events": "^3.3.0",
+    "jstree": "^3.3.12",
+    "lodash": "^4.17.21",
+    "path-browserify": "^1.0.1",
+    "style-loader": "^3.3.1",
+    "three": "^0.135.0"
+  }
+}

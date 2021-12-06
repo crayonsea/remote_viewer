@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif
+}
+
+body {
+    background-color: #eee
+}
+
+.btn {
+    position: absolute;
+    top: 10px;
+    left: 45px;
+    height: 37px;
+    width: 37px;
+    text-align: center;
+    background: #1b1b1b;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: left 0.4s ease
+}
+
+/* 展开 */
+.btn.click {
+    left: 260px
+}
+
+.btn span {
+    color: white;
+    font-size: 15px;
+    line-height: 36px
+}
+
+.btn.click span:before {
+    content: '\f00d'
+}
+
+.sidebar {
+    position: fixed;
+    width: 250px;
+    height: 100%;
+    left: -250px;
+    background: #1b1b1b;
+    transition: left 0.4s ease;
+    overflow-y: auto;
+}
+
+.sidebar.show {
+    left: 0px
+}
+
+/* Title */
+
+.sidebar .text {
+    color: white;
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 30px;
+    text-align: center;
+    background: #1e1e1e;
+    letter-spacing: 1px;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+/* Info */
+
+.sidebar .info {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 0px;
+    letter-spacing: 0px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding-left: 14px;
+}
+
+nav ul {
+    background: #1b1b1b;
+    height: 100%;
+    width: 100%;
+    list-style: none;
+    padding-left: 10px
+}
+
+nav ul li {
+    line-height: 25px;
+    /* border-top: 1px solid rgba(255, 255, 255, 0.1) */
+}
+
+nav ul li:last-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+}
+
+nav ul li a {
+    position: relative;
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    padding-left: 14px;
+    font-weight: 500;
+    display: block;
+    width: 100%;
+    border-left: 3px solid transparent
+}
+
+nav ul li.active a {
+    color: #fd3e3e;
+    background: #1e1e1e;
+    border-left-color: #fd3e3e
+}
+
+nav ul li a:hover {
+    background: #1e1e1e
+}
+
+.feat-show {
+    transition: all 0.5s
+}
+
+nav ul li.active ul {
+    transition: all 0.5s
+}
+
+nav ul ul {
+    position: static;
+    display: none
+}
+
+/* 展开 */
+nav ul.show {
+    display: block;
+    transition: all 0.5s
+}
+
+nav ul ul li {
+    line-height: 25px;
+    border-top: none
+}
+
+nav ul ul li a {
+    font-size: 14px;
+    color: #e6e6e6
+}
+
+nav ul li.active ul li a {
+    color: #e6e6e6;
+    background: #1b1b1b;
+    border-left-color: transparent
+}
+
+a:hover {
+    color: #fd3e3e !important
+}
+
+nav ul ul li a:hover {
+    color: #fd3e3e !important;
+    background: #1e1e1e !important
+}
+
+nav ul li a span {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    font-size: 15px;
+    transition: transform 0.4s
+}
+
+nav ul li a span.rotate {
+    transform: translateY(-50%) rotate(-180deg)
+}
+
+.content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #202020;
+    z-index: -1;
+    text-align: center
+}
+
+/* input 样式 */
+input {
+    outline-style: none ;
+    border: 1px solid #ccc; 
+    border-radius: 3px;
+    padding: 0px 3px;
+    width: 220px;
+    font-size: 12px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+}
+
+/*  滚动条样式 */
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #888; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555; 
+}
+
+li a {
+    clear: both;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
