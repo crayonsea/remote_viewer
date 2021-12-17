@@ -3,6 +3,8 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader';
+import path from "path-browserify";
+import * as Utils from './utils';
 
 const POINT_SIZE_SCALE = 0.01;
 
@@ -56,6 +58,9 @@ class Viewer {
       'bg_color': '#000000',
       'point_size': 5,
       'use_mesh': false,
+      // info
+      'model_name': '',
+      'point_nums': '',
     };
 
     // GUI
@@ -78,7 +83,7 @@ class Viewer {
     
     // GUI
     
-    const gui = new GUI();    
+    const gui = new GUI();
 
     // 背景颜色
     gui.addColor(this.params, 'bg_color').onChange(value => {
@@ -99,20 +104,26 @@ class Viewer {
       console.log(value);
     });
 
+    // folder - info
+    // ---------------------------
+    const folder_info = gui.addFolder( 'Info' );
+    folder_info.add(this.params, 'model_name').listen().disable();
+    folder_info.add(this.params, 'point_nums').listen().disable();
+
   }
 
-  add_object(path) {
+  add_object(file_path) {
 
     $('#load_file_progress').show();
 
     this.ply_loader.load(
-      `/remote_file?path=${path}`, 
+      `/remote_file?path=${file_path}`, 
       (geometry) => {
         // add to scene
         let point_size = this.params['point_size'];
         let material = new THREE.PointsMaterial( { size: point_size * POINT_SIZE_SCALE, vertexColors: true } );
         let points = new THREE.Points( geometry, material );
-        points.name = path;
+        points.name = file_path;
         // center
         let box = new THREE.Box3().setFromPoints(points);
         let center = new THREE.Vector3();
@@ -125,6 +136,10 @@ class Viewer {
         $('#load_file_progress').hide(1000, () => {
           $('#load_file_progress .progress-bar').css({ width: '25%' });
         });
+        // update info
+        this.params['model_name'] = path.basename(points.name);
+        let point_nums = points.geometry.getAttribute('position').array.length / 3;
+        this.params['point_nums'] = Utils.formatNumber(point_nums);
       }, 
       (xhr) => {
         let width = Math.max(25, Math.floor((xhr.loaded / xhr.total * 100)));
@@ -133,9 +148,9 @@ class Viewer {
     );
   }
 
-  update_object(path) {
+  update_object(file_path) {
     this.scene.clear();
-    this.add_object(path);
+    this.add_object(file_path);
   }
 
   animate() {
