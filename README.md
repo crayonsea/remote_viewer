@@ -27,7 +27,7 @@ git clone https://github.com/crayonsea/remote_viewer.git
 2. Setup python environment:
 
 ```bash
-pip install -r requirement.txt
+pip install -r requirements.txt
 ```
 
 3. Build frontend:
