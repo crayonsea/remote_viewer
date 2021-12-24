@@ -16,13 +16,6 @@ def main_page():
     return render_template('index.html')
 
 
-@app.route("/load_remote_file")
-def load_remote_file():
-    default_path = '/home/ljw/workspace/remote_viewer/resources/Lucy100k.ply'
-    pc_path = request.args.get('path', default_path)
-    return send_file(pc_path, mimetype='application/octet-stream', as_attachment=True)
-
-
 def get_directory_info(dir_path):
     ''' 获取文件夹下的目录结构, 并返回 json 格式的 list '''
     data = os.popen(f'ls {dir_path} -all -h --group-directories-first').read()
