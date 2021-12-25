@@ -67,17 +67,21 @@ def remote_file():
         abort(404)
 
 
-if __name__ == '__main__':    
-    # - 主页面
-    # /
-    # - 获取文件
-    # remote_file [GET]
-    # - 获取目录结构
-    # remote_directory [GET] param='direcory'
+if __name__ == '__main__':
+    
+    import argparse
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--debug', action='store_true', help='debug mode or not')
+    parser.add_argument('--port', type=int, help='running port', default=2666)
+    args = parser.parse_args()
 
-    # [DEVELOP]
-    # app.run(host='0.0.0.0', debug=True, port=2666)
+    DEBUG = args.debug
+    PORT = args.port
 
-    # [PRODUCTION]
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=2666)
+    if DEBUG:
+        # [DEVELOP]
+        app.run(host='0.0.0.0', debug=True, port=PORT)
+    else:
+        # [PRODUCTION]
+        from waitress import serve
+        serve(app, host="0.0.0.0", port=PORT)
