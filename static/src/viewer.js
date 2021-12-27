@@ -70,7 +70,11 @@ class Viewer {
     // Loader
 
     this.ply_loader = new PLYLoader();
-
+    // trick - mapping labels to uv -> u: gt / v: pred
+    this.ply_loader.setPropertyNameMapping({
+      'class': 'u',
+      'preds': 'v',
+    });
   }
 
   onWindowResize() {
@@ -119,12 +123,19 @@ class Viewer {
     this.ply_loader.load(
       `/remote_file?path=${file_path}`, 
       (geometry) => {
-        // add to scene
+        // check color attr
+        if (!geometry.hasAttribute('color')) {
+          const positionAttribute = geometry.getAttribute('position');
+          const colorAttribute = new THREE.BufferAttribute( new Float32Array( positionAttribute.array.length ), 3 );
+          colorAttribute.setUsage( THREE.DynamicDrawUsage );
+          geometry.setAttribute('color', colorAttribute );
+        }
+        // create object
         let point_size = this.params['point_size'];
         let material = new THREE.PointsMaterial( { size: point_size * POINT_SIZE_SCALE, vertexColors: true } );
         let points = new THREE.Points( geometry, material );
         points.name = file_path;
-        // center
+        // move to center
         let box = new THREE.Box3().setFromPoints(points);
         let center = new THREE.Vector3();
         box.getCenter( center );
