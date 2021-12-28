@@ -55,7 +55,7 @@ class Viewer {
     // Setting
     
     this.params = {
-      'bg_color': '#000000',
+      'bg_color': '#555555',
       'point_size': 5,
       'use_mesh': false,
       // info
