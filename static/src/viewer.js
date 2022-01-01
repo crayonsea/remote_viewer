@@ -5,6 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader';
 import path from "path-browserify";
 import * as Utils from './utils';
+import { dataset_semseg } from './dataset_semseg';
 
 const POINT_SIZE_SCALE = 0.01;
 
@@ -61,20 +62,32 @@ class Viewer {
       // info
       'model_name': '',
       'point_nums': '',
+      // semantic dataset
+      'dataset': '---',
+      'attr_gt': 'class', 
+      'attr_pred' : 'preds',
+      'show_rgb': () => { this.update_object_color_type('rgb'); },
+      'show_gt': () => { this.update_object_color_type('gt'); },
+      'show_pred': () => { this.update_object_color_type('pred'); },
     };
+
+    // store <label:color> mapping
+    /**
+     * label_name : label_color(hex)
+     */
+    this.params_semseg = {};
+
+    this.renderer.setClearColor(this.params['bg_color']);
 
     // GUI
 
     this.init_gui();
+    this.guis = {};
 
     // Loader
 
     this.ply_loader = new PLYLoader();
-    // trick - mapping labels to uv -> u: gt / v: pred
-    this.ply_loader.setPropertyNameMapping({
-      'class': 'u',
-      'preds': 'v',
-    });
+    this.loader_update_mapping();
   }
 
   onWindowResize() {
@@ -83,10 +96,14 @@ class Viewer {
     this.renderer.setSize( window.innerWidth, window.innerHeight );
   }
 
+  // ---------------------------------------------
+  // GUI
+  // ---------------------------------------------
+
   init_gui() {
     
     // GUI
-    
+
     const gui = new GUI();
 
     // 背景颜色
@@ -114,7 +131,60 @@ class Viewer {
     folder_info.add(this.params, 'model_name').listen().disable();
     folder_info.add(this.params, 'point_nums').listen().disable();
 
+    // folder - semseg label
+    // ---------------------------
+    const folder_semseg = gui.addFolder( 'Semantic' );
+    let attr_control_gt = folder_semseg.add(this.params, 'attr_gt').onChange(value => {
+      console.log('attr_gt', ':', value);
+    });
+    let attr_control_pred = folder_semseg.add(this.params, 'attr_pred').onChange(value => {
+      console.log('attr_pred', ':', value);
+    });
+    folder_semseg.add(this.params, 'show_rgb');
+    folder_semseg.add(this.params, 'show_gt');
+    folder_semseg.add(this.params, 'show_pred');
+    folder_semseg.add(this.params, 'dataset', ['---', 'scannet', 's3dis']).onChange(value => {
+      console.log(value);
+      if (value == '---') {
+        attr_control_gt.enable();
+        attr_control_pred.enable();
+        if (this.guis['semantic'] !== undefined) { this.guis['semantic'].destroy(); }
+      } else {
+        attr_control_gt.disable();
+        attr_control_pred.disable();
+        if (this.guis['semantic'] !== undefined) { this.guis['semantic'].destroy(); }
+        // create setting gui 
+        const gui_semseg = new GUI( { title : 'Semantic Mapping', parent : gui} );
+        // - choose dataset type
+        this.params_semseg = {};
+        const labels = dataset_semseg[value]['labels'];
+        const colors = dataset_semseg[value]['colors'];
+        for (let i = 0; i < labels.length; i++) {
+          this.params_semseg[labels[i]] = colors[i];
+        }
+        for (let key in this.params_semseg) {
+          gui_semseg.addColor(this.params_semseg, key);
+        }
+        gui_semseg.onChange(event => {
+          console.log(event.property, event.value);
+          let objects = this.scene.children;
+          for (let object of objects) {
+            this.update_color(object.geometry, event.property, event.value, this.use_gt);
+          }
+        });
+        this.guis['semantic'] = gui_semseg;
+        // init semseg
+        for (let object of this.scene.children) {
+          this.geometry_use_sem(object.geometry);
+        }
+        this.use_gt = false;
+      }
+    });
   }
+
+  // ---------------------------------------------
+  // Scene
+  // ---------------------------------------------
 
   add_object(file_path) {
 
@@ -130,6 +200,8 @@ class Viewer {
           colorAttribute.setUsage( THREE.DynamicDrawUsage );
           geometry.setAttribute('color', colorAttribute );
         }
+        // backup rgb
+        geometry.setAttribute('color_rgb', geometry.getAttribute('color').clone());
         // create object
         let point_size = this.params['point_size'];
         let material = new THREE.PointsMaterial( { size: point_size * POINT_SIZE_SCALE, vertexColors: true } );
@@ -164,6 +236,89 @@ class Viewer {
     this.add_object(file_path);
   }
 
+  update_object_color_type(type) {
+    let objects = this.scene.children;
+    for (let object of objects) {
+      if (type == 'rgb') {
+        console.log('show rgb');
+        this.geometry_use_rgb(object.geometry);
+      } else if (type == 'gt') {
+        console.log('show gt');
+        this.geometry_use_sem(object.geometry, true);
+      } else if (type == 'pred') {
+        console.log('show pred');
+        this.geometry_use_sem(object.geometry, false);
+      }
+    }
+  }
+
+  // ---------------------------------------------
+  // Geometry
+  // ---------------------------------------------
+  
+  update_color(geometry, label_name, color_value, use_gt=false) {
+    if (!geometry.hasAttribute('uv')) return;
+
+    const colorAttribute = geometry.getAttribute('color');
+    const uvAttribute = geometry.getAttribute('uv');
+
+    const count = colorAttribute.count;
+    const color = new THREE.Color(color_value);
+    const name2class = dataset_semseg[this.params['dataset']]['name2class'];
+    const choose_class = name2class[label_name];
+
+    for (let i = 0; i < count; i++) {
+      const label_class = use_gt? uvAttribute.getX(i): uvAttribute.getY(i);
+      if (label_class != choose_class) continue;
+      colorAttribute.setXYZ(i, color.r, color.g, color.b);
+    }
+    colorAttribute.needsUpdate = true;
+  }
+
+  geometry_use_rgb(geometry) {
+    const colorAttribute = geometry.getAttribute('color');
+    const colorRGBAttribute = geometry.getAttribute('color_rgb');
+    colorAttribute.copy(colorRGBAttribute);
+    colorAttribute.needsUpdate = true;
+  }
+
+  geometry_use_sem(geometry, use_gt=false) {
+    if (!geometry.hasAttribute('uv')) return;
+
+    const colorAttribute = geometry.getAttribute('color');
+    const uvAttribute = geometry.getAttribute('uv');
+    const count = colorAttribute.count;
+
+    for (let i = 0; i < count; i++) {
+      const label_class = use_gt? uvAttribute.getX(i): uvAttribute.getY(i);
+      const class2name = dataset_semseg[this.params['dataset']]['class2name'];
+      const color_value = this.params_semseg[class2name[label_class]];
+      const color = new THREE.Color(color_value);
+      colorAttribute.setXYZ(i, color.r, color.g, color.b);
+    }
+
+    colorAttribute.needsUpdate = true;
+    this.use_gt = use_gt;
+  }
+
+  // ---------------------------------------------
+  // Loader
+  // ---------------------------------------------
+
+  loader_update_mapping() {
+    let mapping = {}
+    let attr_gt = this.params['attr_gt'];
+    let attr_pred = this.params['attr_pred'];
+    mapping[attr_gt] = 'u';
+    mapping[attr_pred] = 'v';
+    // trick - mapping labels to uv -> u: gt / v: pred
+    this.ply_loader.setPropertyNameMapping(mapping);
+  }
+
+  // ---------------------------------------------
+  // Animate
+  // ---------------------------------------------
+  
   animate() {
     const currentTime = Date.now();
     const time = ( currentTime - this.startTime ) / 1000;
