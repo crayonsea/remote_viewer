@@ -69,6 +69,9 @@ class Viewer {
       'show_rgb': () => { this.update_object_color_type('rgb'); },
       'show_gt': () => { this.update_object_color_type('gt'); },
       'show_pred': () => { this.update_object_color_type('pred'); },
+      // semantic metrics
+      'acc': '---',
+      'miou': '---',
     };
 
     // store <label:color> mapping
@@ -143,6 +146,8 @@ class Viewer {
     folder_semseg.add(this.params, 'show_rgb');
     folder_semseg.add(this.params, 'show_gt');
     folder_semseg.add(this.params, 'show_pred');
+    folder_semseg.add(this.params, 'acc').listen().disable();
+    folder_semseg.add(this.params, 'miou').listen().disable();
     folder_semseg.add(this.params, 'dataset', ['---', 'scannet', 's3dis']).onChange(value => {
       console.log(value);
       if (value == '---') {
@@ -178,6 +183,7 @@ class Viewer {
           this.geometry_use_sem(object.geometry);
         }
         this.use_gt = false;
+        this.update_object_metrics();
       }
     });
   }
@@ -223,6 +229,7 @@ class Viewer {
         this.params['model_name'] = path.basename(points.name);
         let point_nums = points.geometry.getAttribute('position').array.length / 3;
         this.params['point_nums'] = Utils.formatNumber(point_nums);
+        this.update_object_metrics();
       }, 
       (xhr) => {
         let width = Math.max(25, Math.floor((xhr.loaded / xhr.total * 100)));
@@ -234,6 +241,39 @@ class Viewer {
   update_object(file_path) {
     this.scene.clear();
     this.add_object(file_path);
+  }
+
+  update_object_metrics() {
+    let objects = this.scene.children;
+    if (objects.length == 0) {
+      this.params['acc'] = '---';
+      this.params['miou'] = '---';
+      return;
+    }
+
+    let geometry = objects[0].geometry;
+    if (!geometry.hasAttribute('uv')) {
+      this.params['acc'] = '---';
+      this.params['miou'] = '---';
+      return;
+    }
+
+    const uvAttribute = geometry.getAttribute('uv');
+    const uvArray = uvAttribute.array;
+
+    // acc
+    let acc;
+    if (this.params['dataset'] == 's3dis') {
+      acc = Utils.metrics_acc(uvArray);
+      acc = acc.toFixed(2) + '%';
+    } else if (this.params['dataset'] == 'scannet') {
+      acc = Utils.metrics_acc(uvArray, 0);
+      acc = acc.toFixed(2) + '%';
+    } else {
+      acc = '---';
+    }
+    this.params['acc'] = acc;
+
   }
 
   update_object_color_type(type) {
