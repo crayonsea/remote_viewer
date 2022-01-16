@@ -51,11 +51,17 @@ python pc_viewer.py
 - Open directory and point cloud files in the filetree.
 - Adjust display properties in the control bar.
 
-![img](images/index.png)
-
 ## Features
+
+### Basic
 
 - view remote server file list
 - visualize 3d data on a remote server in a local browser
 - currently support data type:
     - point cloud: *.ply
+
+![img](images/index.png)
+
+### Semantic Segmentation
+
+![img](images/semantic-segmentation.png)
